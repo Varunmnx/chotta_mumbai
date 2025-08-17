@@ -1,0 +1,105 @@
+.container {
+  min-height: 100vh;
+  background-color:#ec4899;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.05s ease;
+  user-select: none;
+}
+
+.containerDragging {
+  cursor: grabbing;
+}
+
+.startButton {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 2rem 3rem;
+  border-radius: 50px;
+  font-size: 2rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(45deg, #ec4899, #fbbf24);
+  color: white;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+  animation: pulse 2s infinite;
+  user-select: none;
+
+  @media (max-width: 600px) {
+    font-size: 1.5rem;
+    padding: 1.5rem 2rem;
+  }
+
+  @media (max-width: 400px) {
+    font-size: 1.2rem;
+    padding: 1rem 1.5rem;
+  }
+}
+
+.startButton:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.gifContainer {
+  position: absolute;
+  z-index: 15;
+  cursor: grab;
+  transition: none;
+  user-select: none;
+}
+
+.gifContainerDragging {
+  cursor: grabbing;
+  transition: none;
+  user-select: none;
+}
+
+.gif {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  object-fit: cover;
+  /* box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); */
+  animation: bounce 1s infinite, glow 2s infinite alternate;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.hiddenAudio {
+  display: none;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-20px);
+  }
+}
+
+@keyframes glow {
+  0% {
+    filter: brightness(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+  }
+  100% {
+    filter: brightness(1.2) drop-shadow(0 0 30px rgba(255, 255, 255, 0.8));
+  }
+}
