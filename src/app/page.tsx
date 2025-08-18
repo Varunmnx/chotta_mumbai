@@ -1,24 +1,34 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import ParticleSystem from '../components/ParticleSystem';
+import CustomConfetti from '../components/CustomConfetti';
 import styles from './flashyMusicApp.module.css';
 
 const FlashyMusicApp = () => {
   const [isRunning, setIsRunning] = useState(false);
-  const [currentColor, setCurrentColor] = useState('#ffffff');
+  const [currentColor, setCurrentColor] = useState('#ffffff'); // White background initially
   const [gifPosition, setGifPosition] = useState({ x: 50, y: 50 }); // percentage positions
+  const [secondGifPosition, setSecondGifPosition] = useState({ x: 50, y: 70 }); // second GIF position
   const [isDragging, setIsDragging] = useState(false);
+  const [isSecondGifDragging, setIsSecondGifDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [showStartButton, setShowStartButton] = useState(true);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [showSecondGif, setShowSecondGif] = useState(false); // State for showing second GIF
   const audioRef = useRef<HTMLAudioElement>(null);
+  const startTimeRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number>(0);
 
   // Using pink (#ec4899) as the primary highlighted color
-  const colors = ['#ec4899', '#fbbf24', '#ffffff']; // pure pink, yellow, white
-  const confettiColors = ['#ec4899', '#fbbf24', '#ffffff', '#f97316', '#8b5cf6', '#ec4899'];
+  const colors = ['#ec4899', '#fbbf24', '#f8e1f4']; // pure pink, yellow, light pink
   
   // Handle start button click
   const handleStartClick = async () => {
     setIsRunning(true);
+    setShowStartButton(false);
+    setTimeElapsed(0);
+    setShowSecondGif(false); // Reset second GIF
+    startTimeRef.current = Date.now();
     
     // Play music from public folder
     try {
@@ -31,28 +41,59 @@ const FlashyMusicApp = () => {
     }
   };
 
-  // Flash colors effect - much faster and pure colors
+  // Track time elapsed and change colors after 6 seconds
   useEffect(() => {
-    let colorInterval: NodeJS.Timeout;
-    if (isRunning) {
-      colorInterval = setInterval(() => {
-        const randomColor = colors[Math.floor(Math.random() * colors.length)];
-        setCurrentColor(randomColor);
-      }, 80); // Very fast flashing
-    } else {
-      setCurrentColor('#ffffff');
-    }
+    if (!isRunning) return;
 
+    const updateTimer = () => {
+      if (startTimeRef.current) {
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        setTimeElapsed(elapsed);
+        
+        // Change colors only after 6 seconds
+        if (elapsed >= 6) {
+          const randomColor = colors[Math.floor(Math.random() * colors.length)];
+          setCurrentColor(randomColor);
+        } else {
+          setCurrentColor('#ffffff'); // White background initially
+        }
+        
+        // Show second GIF after 7 seconds
+        if (elapsed >= 7) {
+          setShowSecondGif(true);
+        }
+      }
+      animationFrameRef.current = requestAnimationFrame(updateTimer);
+    };
+
+    animationFrameRef.current = requestAnimationFrame(updateTimer);
+    
     return () => {
-      if (colorInterval) clearInterval(colorInterval);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
   }, [isRunning]);
 
-  // Handle gif dragging
+  // Handle gif dragging for first GIF
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isRunning) return;
     
     setIsDragging(true);
+    setIsSecondGifDragging(false); // Ensure only one is dragging
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  // Handle gif dragging for second GIF
+  const handleSecondGifMouseDown = (e: React.MouseEvent) => {
+    if (!isRunning) return;
+    
+    setIsSecondGifDragging(true);
+    setIsDragging(false); // Ensure only one is dragging
     const rect = e.currentTarget.getBoundingClientRect();
     setDragOffset({
       x: e.clientX - rect.left,
@@ -61,23 +102,34 @@ const FlashyMusicApp = () => {
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging || !isRunning) return;
+    if (!isRunning) return;
+    
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') return;
     
     const newX = ((e.clientX - dragOffset.x) / window.innerWidth) * 100;
     const newY = ((e.clientY - dragOffset.y) / window.innerHeight) * 100;
     
-    setGifPosition({
-      x: Math.max(0, Math.min(90, newX)), // Keep within bounds
-      y: Math.max(0, Math.min(90, newY))
-    });
+    if (isDragging) {
+      setGifPosition({
+        x: Math.max(0, Math.min(90, newX)), // Keep within bounds
+        y: Math.max(0, Math.min(90, newY))
+      });
+    } else if (isSecondGifDragging) {
+      setSecondGifPosition({
+        x: Math.max(0, Math.min(90, newX)), // Keep within bounds
+        y: Math.max(0, Math.min(90, newY))
+      });
+    }
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
+    setIsSecondGifDragging(false);
   };
 
   useEffect(() => {
-    if (isDragging) {
+    if (isDragging || isSecondGifDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -86,7 +138,25 @@ const FlashyMusicApp = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, isSecondGifDragging]);
+
+  // Handle audio end event
+  useEffect(() => {
+    const audioElement = audioRef.current;
+    if (!audioElement) return;
+
+    const handleAudioEnd = () => {
+      setIsRunning(false);
+      setShowStartButton(true);
+      setCurrentColor('#ffffff');
+    };
+
+    audioElement.addEventListener('ended', handleAudioEnd);
+    
+    return () => {
+      audioElement.removeEventListener('ended', handleAudioEnd);
+    };
+  }, []);
 
   // Update body styles when running
   useEffect(() => {
@@ -106,11 +176,11 @@ const FlashyMusicApp = () => {
       className={`${styles.container} ${isDragging ? styles.containerDragging : ''}`}
       style={{ backgroundColor: currentColor }}
     >
-      {/* Particle System for Confetti - more particles */}
-      <ParticleSystem isActive={isRunning} colors={confettiColors} />
+      {/* Custom confetti effect */}
+      <CustomConfetti isActive={isRunning} />
 
-      {/* Start Button - only shows initially */}
-      {!isRunning && (
+      {/* Start Button - shows initially and after song ends */}
+      {(showStartButton || !isRunning) && (
         <button
           className={styles.startButton}
           onClick={handleStartClick}
@@ -119,7 +189,7 @@ const FlashyMusicApp = () => {
         </button>
       )}
 
-      {/* Movable GIF */}
+      {/* Movable GIF - show doge-flip for first 7 seconds */}
       {isRunning && (
         <div 
           className={`${styles.gifContainer} ${isDragging ? styles.gifContainerDragging : ''}`}
@@ -131,9 +201,29 @@ const FlashyMusicApp = () => {
           onMouseDown={handleMouseDown}
         >
           <img 
+            src="/doge-flip.gif" 
+            alt="Doge Flip"
+            className={styles.gif}
+            draggable={false}
+          />
+        </div>
+      )}
+
+      {/* Second GIF - show lalettan after 7 seconds */}
+      {isRunning && showSecondGif && (
+        <div 
+          className={`${styles.gifContainer} ${isSecondGifDragging ? styles.gifContainerDragging : ''}`}
+          style={{
+            left: `${secondGifPosition.x}%`,
+            top: `${secondGifPosition.y}%`,
+            transform: 'translate(-50%, -50%)'
+          }}
+          onMouseDown={handleSecondGifMouseDown}
+        >
+          <img 
             src="/lalettan.gif" 
             alt="Dancing Lalettan"
-            className={styles.gif}
+            className={styles.largerGif}
             draggable={false}
           />
         </div>
@@ -143,7 +233,6 @@ const FlashyMusicApp = () => {
       <audio 
         ref={audioRef} 
         className={styles.hiddenAudio}
-        loop
       >
         <source src="/chettikulangara.mp3" type="audio/mpeg" />
         Your browser does not support the audio element.
