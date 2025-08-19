@@ -19,6 +19,8 @@ const FlashyMusicApp = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const startTimeRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number>(0);
+  const mouseMoveRef = useRef<((e: MouseEvent) => void) | null>(null);
+  const touchMoveRef = useRef<((e: TouchEvent) => void) | null>(null);
 
   // Using pink (#ec4899) as the primary highlighted color
   const colors = ['#ec4899', '#fbbf24', '#f8e1f4']; // pure pink, yellow, light pink
@@ -86,10 +88,15 @@ const FlashyMusicApp = () => {
     setIsDragging(true);
     setIsSecondGifDragging(false); // Ensure only one is dragging
     const rect = e.currentTarget.getBoundingClientRect();
+    // Calculate offset to position the GIF closer to the mouse point (reduced distance)
     setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: e.clientX - rect.left - rect.width / 2,
+      y: e.clientY - rect.top - rect.height / 2
     });
+    
+    // Prevent default behavior
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   // Handle gif dragging for second GIF (mouse events)
@@ -99,10 +106,15 @@ const FlashyMusicApp = () => {
     setIsSecondGifDragging(true);
     setIsDragging(false); // Ensure only one is dragging
     const rect = e.currentTarget.getBoundingClientRect();
+    // Calculate offset to position the GIF closer to the mouse point (reduced distance)
     setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: e.clientX - rect.left - rect.width / 2,
+      y: e.clientY - rect.top - rect.height / 2
     });
+    
+    // Prevent default behavior
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   // Handle gif dragging for first GIF (touch events)
@@ -112,10 +124,16 @@ const FlashyMusicApp = () => {
     setIsDragging(true);
     setIsSecondGifDragging(false); // Ensure only one is dragging
     const rect = e.currentTarget.getBoundingClientRect();
+    // Calculate offset to position the GIF center at the touch point
+    // This reduces the distance between touch point and GIF during drag
     setDragOffset({
       x: e.touches[0].clientX - rect.left,
       y: e.touches[0].clientY - rect.top
     });
+    
+    // Prevent default behavior to stop scrolling and other touch actions
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   // Handle gif dragging for second GIF (touch events)
@@ -125,10 +143,16 @@ const FlashyMusicApp = () => {
     setIsSecondGifDragging(true);
     setIsDragging(false); // Ensure only one is dragging
     const rect = e.currentTarget.getBoundingClientRect();
+    // Calculate offset to position the GIF center at the touch point
+    // This reduces the distance between touch point and GIF during drag
     setDragOffset({
       x: e.touches[0].clientX - rect.left,
       y: e.touches[0].clientY - rect.top
     });
+    
+    // Prevent default behavior to stop scrolling and other touch actions
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const handleMouseMove = (e: MouseEvent) => {
@@ -176,6 +200,7 @@ const FlashyMusicApp = () => {
     
     // Prevent scrolling while dragging
     e.preventDefault();
+    e.stopPropagation();
   };
 
   const handleMouseUp = () => {
@@ -190,16 +215,47 @@ const FlashyMusicApp = () => {
 
   useEffect(() => {
     if (isDragging || isSecondGifDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
+      // Throttle mouse move events for smoother dragging
+      let ticking = false;
+      
+      const throttledMouseMove = (e: MouseEvent) => {
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            handleMouseMove(e);
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+      
+      const throttledTouchMove = (e: TouchEvent) => {
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            handleTouchMove(e);
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+      
+      document.addEventListener('mousemove', throttledMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchmove', throttledTouchMove, { passive: false });
       document.addEventListener('touchend', handleTouchEnd);
+      
+      // Store references for cleanup
+      mouseMoveRef.current = throttledMouseMove;
+      touchMoveRef.current = throttledTouchMove;
     }
     
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
+      if (mouseMoveRef.current) {
+        document.removeEventListener('mousemove', mouseMoveRef.current);
+      }
+      if (touchMoveRef.current) {
+        document.removeEventListener('touchmove', touchMoveRef.current);
+      }
       document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isDragging, isSecondGifDragging]);
