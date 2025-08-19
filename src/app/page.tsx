@@ -53,6 +53,9 @@ const FlashyMusicApp = () => {
     // Reset positions to center
     setGifPosition({ x: 50, y: 50 });
     setSecondGifPosition({ x: 70, y: 50 }); // Will appear to the right when shown
+    if (window?.innerWidth < 600) {
+      setSecondGifPosition({ x: 90, y: 50 }); 
+    }
     startTimeRef.current = Date.now();
     
     // Play music from public folder
@@ -107,7 +110,7 @@ const FlashyMusicApp = () => {
     setIsDragging(true);
     setIsSecondGifDragging(false); // Ensure only one is dragging
     const rect = e.currentTarget.getBoundingClientRect();
-    // Calculate offset to position the GIF closer to the mouse point (reduced distance)
+    // Calculate offset to position the GIF center at the mouse point
     setDragOffset({
       x: e.clientX - rect.left - rect.width / 2,
       y: e.clientY - rect.top - rect.height / 2
@@ -125,7 +128,7 @@ const FlashyMusicApp = () => {
     setIsSecondGifDragging(true);
     setIsDragging(false); // Ensure only one is dragging
     const rect = e.currentTarget.getBoundingClientRect();
-    // Calculate offset to position the GIF closer to the mouse point (reduced distance)
+    // Calculate offset to position the GIF center at the mouse point
     setDragOffset({
       x: e.clientX - rect.left - rect.width / 2,
       y: e.clientY - rect.top - rect.height / 2
@@ -146,8 +149,8 @@ const FlashyMusicApp = () => {
     // Calculate offset to position the GIF center at the touch point
     // This reduces the distance between touch point and GIF during drag
     setDragOffset({
-      x: e.touches[0].clientX - rect.left,
-      y: e.touches[0].clientY - rect.top
+      x: e.touches[0].clientX - rect.left - rect.width / 2,
+      y: e.touches[0].clientY - rect.top - rect.height / 2
     });
     
     // Prevent default behavior to stop scrolling and other touch actions
@@ -165,8 +168,8 @@ const FlashyMusicApp = () => {
     // Calculate offset to position the GIF center at the touch point
     // This reduces the distance between touch point and GIF during drag
     setDragOffset({
-      x: e.touches[0].clientX - rect.left,
-      y: e.touches[0].clientY - rect.top
+      x: e.touches[0].clientX - rect.left - rect.width / 2,
+      y: e.touches[0].clientY - rect.top - rect.height / 2
     });
     
     // Prevent default behavior to stop scrolling and other touch actions

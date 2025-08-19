@@ -37,6 +37,8 @@
   transition: transform 0.1s ease-out;
   user-select: none;
   touch-action: none; /* Prevent default touch actions like scrolling and zooming */
+  /* Ensure proper positioning */
+  transform: translate(-50%, -50%);
 }
 
 .gifContainerDragging {
@@ -56,6 +58,8 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  /* Add pointer events to ensure touch interactions work properly */
+  pointer-events: auto;
 }
 
 .largerGif {
@@ -68,6 +72,8 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  /* Add pointer events to ensure touch interactions work properly */
+  pointer-events: auto;
 }
 
 .hiddenAudio {
