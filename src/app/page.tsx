@@ -5,6 +5,25 @@ import CustomConfetti from '../components/CustomConfetti';
 import Button from '../components/Button';
 import styles from './flashyMusicApp.module.css';
 
+// Structured data for SEO
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Chotta Mumbai Vibe",
+  "applicationCategory": "EntertainmentApplication",
+  "operatingSystem": "Any",
+  "description": "An interactive music experience that brings the vibrant energy of Mumbai to life",
+  "url": "https://vibe.varunnarayananwrites.site",
+  "creator": {
+    "@type": "Person",
+    "name": "Varun Narayanan",
+    "url": "https://www.varunnarayananwrites.site",
+    "sameAs": [
+      "https://twitter.com/Varun_Narayana1"
+    ]
+  }
+};
+
 const FlashyMusicApp = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [currentColor, setCurrentColor] = useState('#ffffff'); // White background initially
@@ -296,6 +315,14 @@ const FlashyMusicApp = () => {
       className={`${styles.container} ${isDragging ? styles.containerDragging : ''}`}
       style={{ backgroundColor: currentColor }}
     >
+      {/* Structured data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData),
+        }}
+      />
+      
       {/* Custom confetti effect */}
       <CustomConfetti isActive={isRunning} />
 
