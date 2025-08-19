@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import CustomConfetti from '../components/CustomConfetti';
+import Button from '../components/Button';
 import styles from './flashyMusicApp.module.css';
 
 const FlashyMusicApp = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [currentColor, setCurrentColor] = useState('#ffffff'); // White background initially
   const [gifPosition, setGifPosition] = useState({ x: 50, y: 50 }); // percentage positions
-  const [secondGifPosition, setSecondGifPosition] = useState({ x: 50, y: 70 }); // second GIF position
+  const [secondGifPosition, setSecondGifPosition] = useState({ x: 70, y: 50 }); // second GIF position (start on right)
   const [isDragging, setIsDragging] = useState(false);
   const [isSecondGifDragging, setIsSecondGifDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -28,6 +29,9 @@ const FlashyMusicApp = () => {
     setShowStartButton(false);
     setTimeElapsed(0);
     setShowSecondGif(false); // Reset second GIF
+    // Reset positions to center
+    setGifPosition({ x: 50, y: 50 });
+    setSecondGifPosition({ x: 70, y: 50 }); // Will appear to the right when shown
     startTimeRef.current = Date.now();
     
     // Play music from public folder
@@ -75,7 +79,7 @@ const FlashyMusicApp = () => {
     };
   }, [isRunning]);
 
-  // Handle gif dragging for first GIF
+  // Handle gif dragging for first GIF (mouse events)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!isRunning) return;
     
@@ -88,7 +92,7 @@ const FlashyMusicApp = () => {
     });
   };
 
-  // Handle gif dragging for second GIF
+  // Handle gif dragging for second GIF (mouse events)
   const handleSecondGifMouseDown = (e: React.MouseEvent) => {
     if (!isRunning) return;
     
@@ -98,6 +102,32 @@ const FlashyMusicApp = () => {
     setDragOffset({
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
+    });
+  };
+
+  // Handle gif dragging for first GIF (touch events)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isRunning) return;
+    
+    setIsDragging(true);
+    setIsSecondGifDragging(false); // Ensure only one is dragging
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top
+    });
+  };
+
+  // Handle gif dragging for second GIF (touch events)
+  const handleSecondGifTouchStart = (e: React.TouchEvent) => {
+    if (!isRunning) return;
+    
+    setIsSecondGifDragging(true);
+    setIsDragging(false); // Ensure only one is dragging
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top
     });
   };
 
@@ -123,7 +153,37 @@ const FlashyMusicApp = () => {
     }
   };
 
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!isRunning) return;
+    
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') return;
+    
+    const newX = ((e.touches[0].clientX - dragOffset.x) / window.innerWidth) * 100;
+    const newY = ((e.touches[0].clientY - dragOffset.y) / window.innerHeight) * 100;
+    
+    if (isDragging) {
+      setGifPosition({
+        x: Math.max(0, Math.min(90, newX)), // Keep within bounds
+        y: Math.max(0, Math.min(90, newY))
+      });
+    } else if (isSecondGifDragging) {
+      setSecondGifPosition({
+        x: Math.max(0, Math.min(90, newX)), // Keep within bounds
+        y: Math.max(0, Math.min(90, newY))
+      });
+    }
+    
+    // Prevent scrolling while dragging
+    e.preventDefault();
+  };
+
   const handleMouseUp = () => {
+    setIsDragging(false);
+    setIsSecondGifDragging(false);
+  };
+
+  const handleTouchEnd = () => {
     setIsDragging(false);
     setIsSecondGifDragging(false);
   };
@@ -132,11 +192,15 @@ const FlashyMusicApp = () => {
     if (isDragging || isSecondGifDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
     }
     
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
     };
   }, [isDragging, isSecondGifDragging]);
 
@@ -181,15 +245,18 @@ const FlashyMusicApp = () => {
 
       {/* Start Button - shows initially and after song ends */}
       {(showStartButton || !isRunning) && (
-        <button
+        <Button
           className={styles.startButton}
           onClick={handleStartClick}
         >
-          🎉 START
-        </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img src="/doge.png" alt="Doge" style={{ width: '30px', height: '30px' }} />
+            <span>START</span>
+          </div>
+        </Button>
       )}
 
-      {/* Movable GIF - show doge-flip for first 7 seconds */}
+      {/* Movable GIF - show doge-flip for first 7 seconds (centered initially) */}
       {isRunning && (
         <div 
           className={`${styles.gifContainer} ${isDragging ? styles.gifContainerDragging : ''}`}
@@ -199,6 +266,7 @@ const FlashyMusicApp = () => {
             transform: 'translate(-50%, -50%)'
           }}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
         >
           <img 
             src="/doge-flip.gif" 
@@ -209,7 +277,7 @@ const FlashyMusicApp = () => {
         </div>
       )}
 
-      {/* Second GIF - show lalettan after 7 seconds */}
+      {/* Second GIF - show lalettan after 7 seconds (to the right of first GIF) */}
       {isRunning && showSecondGif && (
         <div 
           className={`${styles.gifContainer} ${isSecondGifDragging ? styles.gifContainerDragging : ''}`}
@@ -219,6 +287,7 @@ const FlashyMusicApp = () => {
             transform: 'translate(-50%, -50%)'
           }}
           onMouseDown={handleSecondGifMouseDown}
+          onTouchStart={handleSecondGifTouchStart}
         >
           <img 
             src="/lalettan.gif" 

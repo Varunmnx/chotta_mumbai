@@ -10,58 +10,23 @@
   cursor: grabbing;
 }
 
+/* Button positioning only - styles are handled by the Button component */
 .startButton {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding: 2rem 3rem;
-  font-size: 2rem;
-  font-weight: bold;
-  border: none;
-  cursor: pointer;
-  background: linear-gradient(145deg, #ff0080, #ff8c00); /* Neu brutalist gradient */
-  color: #11827ff;
-  box-shadow: 
-    12px 12px 0px #000000, /* Hard shadow for brutalist effect */
-    inset 4px 4px 0px rgba(255, 255, 255, 0.4), /* Inner light for 3D effect */
-    inset -4px -4px 0px rgba(0, 0, 0, 0.3); /* Inner shadow for depth */
-  transition: all 0.2s ease;
-  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
   z-index: 20;
-  animation: pulse 1.5s infinite, rainbow 3s linear infinite;
-  user-select: none;
-  border-radius: 0; /* Sharp corners for brutalism */
-  border: 4px solid #000000; /* Thick black border for brutalism */
-  font-family: 'Comic Sans MS', 'Arial Black', sans-serif; /* Bold playful font */
-
-  @media (max-width: 600px) {
-    font-size: 1.5rem;
-    padding: 1.5rem 2rem;
-  }
-
-  @media (max-width: 400px) {
-    font-size: 1.2rem;
-    padding: 1rem 1.5rem;
-  }
+  margin: 0; /* Ensure no margin is affecting positioning */
 }
 
+/* Override hover and active transforms to prevent position shift */
 .startButton:hover {
-  /* Enhanced hover effect with more depth */
-  transform: translate(-50%, -50%) translate(2px, 2px); /* Slight movement for 3D effect */
-  box-shadow: 
-    10px 10px 0px #000000, /* Reduced shadow on hover */
-    inset 4px 4px 0px rgba(255, 255, 255, 0.4),
-    inset -4px -4px 0px rgba(0, 0, 0, 0.3);
-  background: linear-gradient(145deg, #ff8c00, #ff0080); /* Reverse gradient on hover */
+  transform: translate(-50%, -50%) translate(0, 0.1em) !important;
 }
 
 .startButton:active {
-  transform: translate(-50%, -50%) translate(6px, 6px); /* Pressed down effect */
-  box-shadow: 
-    6px 6px 0px #000000, /* Reduced shadow when pressed */
-    inset 2px 2px 0px rgba(0, 0, 0, 0.3), /* Inner shadow change for press effect */
-    inset -2px -2px 0px rgba(255, 255, 255, 0.2); /* Inner light change for press effect */
+  transform: translate(-50%, -50%) translate(0, 0.45em) !important;
 }
 
 .gifContainer {
